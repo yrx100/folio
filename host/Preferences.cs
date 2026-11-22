@@ -6,8 +6,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
-using Microsoft.Win32;
-using System.Runtime.InteropServices;
 
 internal static class SharedWrites
 {
@@ -58,35 +56,4 @@ internal sealed class Preferences
         if(string.IsNullOrWhiteSpace(p.Model)||(c.Active=="deepseek"&&string.IsNullOrEmpty(p.Secret)))throw new InvalidOperationException("请先在模型设置中配置 AI 服务。");
         return new AiSettings{Url=p.Url,Model=p.Model,Key=string.IsNullOrEmpty(p.Secret)?"":Encoding.UTF8.GetString(ProtectedData.Unprotect(Convert.FromBase64String(p.Secret),null,DataProtectionScope.CurrentUser))};
     }
-}
-internal static class ShellMenu
-{
-    const string Label="Folio · 修改备注";
-    static readonly Dictionary<string,string> Paths=new Dictionary<string,string>{
-        {@"Software\Classes\*\shell\ProjectNotesLite.Edit","%1"},
-        {@"Software\Classes\Directory\shell\ProjectNotesLite.Edit",@"%1\."},
-        {@"Software\Classes\Directory\Background\shell\ProjectNotesLite.Edit",@"%V\."},
-    };
-    static string Command(string executable,string target){return "\""+executable+"\" --edit \""+target+"\"";}
-    static bool Owns(string path,string target,string executable,bool includeLegacy=false){
-        using(var key=Registry.CurrentUser.OpenSubKey(path+@"\command"))
-        {
-            var command=key==null?null:key.GetValue("") as string;
-            return string.Equals(command,Command(executable,target),StringComparison.OrdinalIgnoreCase)||
-                (includeLegacy&&string.Equals(command,Command(executable,"%1"),StringComparison.OrdinalIgnoreCase));
-        }
-    }
-    internal static void Set(bool enabled,string executable){
-        foreach(var entry in Paths){
-            if(enabled){using(var k=Registry.CurrentUser.CreateSubKey(entry.Key)){
-                k.SetValue("",Label);k.SetValue("MUIVerb",Label);k.SetValue("Icon","\""+executable+"\",0");k.SetValue("MultiSelectModel","Single");
-                using(var cmd=k.CreateSubKey("command"))cmd.SetValue("",Command(executable,entry.Value));
-            }}else if(Owns(entry.Key,entry.Value,executable,true))Registry.CurrentUser.DeleteSubKeyTree(entry.Key,false);
-        }
-        SHChangeNotify(0x08000000,0,IntPtr.Zero,IntPtr.Zero);
-    }
-    internal static bool Enabled(string exe){
-        return Paths.All(entry=>Owns(entry.Key,entry.Value,exe));
-    }
-    [DllImport("shell32.dll")]static extern void SHChangeNotify(int e,uint f,IntPtr a,IntPtr b);
 }

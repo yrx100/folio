@@ -47,8 +47,16 @@ jobs:
           $background = 'HKCU:\Software\Classes\Directory\Background\shell\ProjectNotesLite.Edit\command'
           $expected = '"' + $target + '\Folio.exe" --edit "%V\."'
           if ((Get-Item -LiteralPath $background).GetValue('') -ne $expected) { throw 'Missing Explorer background shortcut' }
+          $modern = [Environment]::OSVersion.Version.Build -ge 22000
+          if ($modern) {
+            $env:FOLIO_MENU_DIRECTORY = $target
+            $env:FOLIO_MENU_ACTION = 'status'
+            $status = & powershell.exe -NoProfile -NonInteractive -File explorer/ManagePackage.ps1
+            if ($LASTEXITCODE -ne 0 -or $status -ne 'modern') { throw 'Missing Windows 11 Explorer package' }
+          }
           $uninstall = Start-Process "$target\unins000.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -WindowStyle Hidden -Wait -PassThru
           if ($uninstall.ExitCode -ne 0 -or (Test-Path -LiteralPath $background)) { throw 'Folio uninstallation failed' }
+          if ($modern -and (Get-AppxPackage -Name 'Folio.Explorer')) { throw 'Windows 11 Explorer package was not removed' }
       - name: Publish release
         shell: pwsh
         env:

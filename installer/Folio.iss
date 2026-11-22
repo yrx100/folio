@@ -1,6 +1,9 @@
 ﻿#ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
+#ifndef BuildDir
+  #define BuildDir "..\bin"
+#endif
 
 [Setup]
 AppId={{BCFE3E29-D932-4DC1-BAB6-808E80AD1FC4}
@@ -26,7 +29,10 @@ Type: files; Name: "{userprograms}\项目备注.lnk"; Check: IsLegacyInstall
 Type: files; Name: "{app}\ProjectNotes.exe"; Check: IsLegacyInstall
 
 [Files]
-Source: "..\bin\Folio.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\Folio.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\FolioExplorer.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\FolioExplorer.msix"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#BuildDir}\FolioLogo.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\ThirdPartyNotices.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -37,6 +43,7 @@ Name: "explorer"; Description: "在资源管理器中添加 Folio 右键操作"
 
 [Run]
 Filename: "{app}\Folio.exe"; Parameters: "--register-menu"; Flags: runhidden; Tasks: explorer
+Filename: "{app}\Folio.exe"; Parameters: "--remove-menu"; Flags: runhidden; Tasks: not explorer
 Filename: "{app}\Folio.exe"; Description: "打开 Folio"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

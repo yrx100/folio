@@ -12,10 +12,13 @@ using System.Web.Script.Serialization;
 
 internal sealed class Entry
 {
+    private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     internal readonly string Path;
     internal readonly string Name;
     internal readonly bool Folder;
     internal readonly bool Link;
+    internal readonly long Size;
+    internal readonly long Modified;
 
     internal Entry(FileSystemInfo info)
     {
@@ -23,6 +26,17 @@ internal sealed class Entry
         Name = info.Name;
         Folder = (info.Attributes & FileAttributes.Directory) != 0;
         Link = (info.Attributes & FileAttributes.ReparsePoint) != 0;
+        long size = -1;
+        long modified = 0;
+        try
+        {
+            if (!Folder && info is FileInfo) size = ((FileInfo)info).Length;
+            modified = (long)(info.LastWriteTimeUtc - UnixEpoch).TotalMilliseconds;
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        Size = size;
+        Modified = modified;
     }
 
     internal static Entry[] List(string path)
@@ -67,14 +81,22 @@ internal static class Summary
 
     internal static string Evidence(string project, Dictionary<string, string> fileNotes)
     {
-        if(File.Exists(project)){
-            var file=new FileInfo(project);
-            if(!Eligible(file))throw new IOException("该文件可能包含私密资料，请手动填写备注。");
-            var textFile=new StringBuilder("文件："+file.Name+"，大小："+file.Length+" 字节。");
-            string note;if(fileNotes.TryGetValue(project,out note))textFile.AppendLine().AppendLine("已有备注："+note);
-            string[] readable={".md",".txt",".rst",".cs",".py",".ts",".tsx",".js",".jsx",".css",".html",".rs",".go",".java"};
-            if(readable.Contains(file.Extension,StringComparer.OrdinalIgnoreCase)){
-                using(var reader=new StreamReader(project,Encoding.UTF8,true)){var chars=new char[2400];int n=reader.ReadBlock(chars,0,chars.Length);if(Array.IndexOf(chars,'\0',0,n)<0)textFile.AppendLine().AppendLine("文件摘录：").Append(chars,0,n);}
+        if (File.Exists(project))
+        {
+            var file = new FileInfo(project);
+            if (!Eligible(file)) throw new IOException("该文件可能包含私密资料，请手动填写备注。");
+            var textFile = new StringBuilder("文件：" + file.Name + "，大小：" + file.Length + " 字节。");
+            string note;
+            if (fileNotes.TryGetValue(project, out note)) textFile.AppendLine().AppendLine("已有备注：" + note);
+            string[] readable = { ".md", ".txt", ".rst", ".cs", ".py", ".ts", ".tsx", ".js", ".jsx", ".css", ".html", ".rs", ".go", ".java" };
+            if (readable.Contains(file.Extension, StringComparer.OrdinalIgnoreCase))
+            {
+                using (var reader = new StreamReader(project, Encoding.UTF8, true))
+                {
+                    var chars = new char[2400];
+                    int n = reader.ReadBlock(chars, 0, chars.Length);
+                    if (Array.IndexOf(chars, '\0', 0, n) < 0) textFile.AppendLine().AppendLine("文件摘录：").Append(chars, 0, n);
+                }
             }
             return textFile.ToString();
         }
@@ -152,9 +174,14 @@ internal static class Summary
     internal static async Task<string> Generate(AiSettings settings, string evidence, CancellationToken cancellation)
     {
         var json = new JavaScriptSerializer();
-        var body = new { model = settings.Model, messages = new[] {
-            new { role = "system", content = Instruction }, new { role = "user", content = evidence }
-        } };
+        var body = new
+        {
+            model = settings.Model,
+            messages = new[] {
+                new { role = "system", content = Instruction },
+                new { role = "user", content = evidence }
+            }
+        };
         using (var request = new HttpRequestMessage(HttpMethod.Post, AiSettings.CheckEndpoint(settings.Url)))
         {
             if (settings.Key.Length > 0) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.Key);

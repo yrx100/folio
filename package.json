@@ -8,11 +8,16 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "clsx": "^2.1.1",
     "driver.js": "1.14.0",
+    "motion": "^14.14.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.7.1"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "@tailwindcss/cli": "^4.3.5",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.3.5"
   }
 }

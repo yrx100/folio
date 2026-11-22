@@ -1,4 +1,8 @@
-param([string]$InnoCompiler)
+param(
+    [string]$InnoCompiler,
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'bin'),
+    [string]$ExplorerSigningThumbprint
+)
 
 $ErrorActionPreference = 'Stop'
 $version = (Get-Content -Raw (Join-Path $PSScriptRoot 'package.json') | ConvertFrom-Json).version
@@ -17,8 +21,9 @@ if (!$InnoCompiler -or !(Test-Path -LiteralPath $InnoCompiler -PathType Leaf)) {
     throw 'Inno Setup 6 compiler not found. Set -InnoCompiler to the full path to ISCC.exe.'
 }
 
-& (Join-Path $PSScriptRoot 'build.ps1')
-& $InnoCompiler "/DAppVersion=$version" (Join-Path $PSScriptRoot 'installer\Folio.iss')
+$OutputDirectory = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputDirectory)
+& (Join-Path $PSScriptRoot 'build.ps1') -OutputDirectory $OutputDirectory -ExplorerSigningThumbprint $ExplorerSigningThumbprint
+& $InnoCompiler "/DAppVersion=$version" "/DBuildDir=$OutputDirectory" (Join-Path $PSScriptRoot 'installer\Folio.iss')
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
 $file = Get-Item -LiteralPath (Join-Path $PSScriptRoot "dist\Folio-Setup-$version-x64.exe")
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.FullName).Hash.ToLowerInvariant()

@@ -1,40 +1,55 @@
 # Folio
 
-Folio 是一个 Windows 目录备注工具。打开本地文件夹后，可以在一屏内浏览目录树、搜索文件和备注，并为文件或子文件夹补充说明。
+Folio 是一个 Windows 本地目录备注工作台。打开本地文件夹后，可在三栏桌面界面中浏览目录树、切换列表与卡片视图、搜索与排序项目，并在右侧详情栏为文件或子文件夹撰写备注。
 
 ![Folio 工作区](docs/workspace.png)
 
+## 特性亮点
+
+- **纯白画布与多主题强调色体系**：默认采用纯净画廊白画布搭配苹果系 **澄蓝** 主题强调色，内置「曜石黑」「朱砂」「赤陶」「绯红」可选强调色、深灰暗色模式（支持跟随 Windows 系统）与标准/紧凑列表密度。
+- **三栏桌面布局与多视图**：左侧可折叠目录树与工作区切换、中部支持虚拟化列表视图与分组卡片视图、右侧独立备注详情栏（窄窗自动转为抽屉浮层）。
+- **无打断备注流**：当前目录备注可在顶部条内直接点击编辑；列表/卡片选中项目即可在详情栏编写，也支持行内快捷编辑与键盘导航（`↑`/`↓`、`Enter`、`Ctrl+S`、`Ctrl+F`、`Ctrl+I`、`Ctrl+\`）。
+- **AI 拟稿与审阅**：在「设置 → 模型设置」配置 DeepSeek 或 OpenAI Chat Completions 兼容接口后，可在详情栏直接生成候选备注、与原备注对照微调，确认后写入并支持一键撤销。
+- **Windows 原生集成**：文件夹备注保存在 Windows 可读的 `desktop.ini`（`InfoTip`）中，支持一键检测与开启资源管理器「备注」列，以及资源管理器右键菜单「Folio · 修改备注」。
+
 ## 安装
 
-从 [GitHub Releases](https://github.com/yrx100/folio/releases/latest) 下载 `Folio-Setup-*-x64.exe`。安装适用于 Windows 10 1809 及更新版本的 x64 系统，需要 .NET Framework 4.6.2 或更新版本以及 Microsoft Edge WebView2 Runtime。
+从 [GitHub Releases](https://github.com/yrx100/folio/releases/latest) 下载 `Folio-Setup-*-x64.exe`。适用于 Windows 10 1809 及更新版本的 x64 系统，需要 .NET Framework 4.6.2 或更新版本以及 Microsoft Edge WebView2 Runtime。
 
-Folio 按当前 Windows 用户安装。安装时可以选中「在资源管理器中添加 Folio 右键操作」，之后从开始菜单打开 Folio。
+Folio 按当前 Windows 用户安装。安装时可选中「在资源管理器中添加 Folio 右键操作」，之后从开始菜单打开 Folio。
 
-## 第一次使用
+在 Windows 11 x64 上，右键文件、文件夹或文件夹内的空白处，即可在一级菜单中选择「Folio · 修改备注」。Windows 10 使用经典右键菜单。若 Windows 未能注册一级菜单，可从「显示更多选项」打开。
 
-首次启动会显示空工作区和三步引导，带你了解如何打开文件夹、添加备注和配置设置。关闭引导后，可随时点击「快速上手」重看。
+## 项目结构
 
-![Folio 首次启动引导](docs/guide.png)
-
-1. 点击「打开文件夹」，选择一个本地目录。
-2. 在列表中点击铅笔为单个项目写备注。当前文件夹自己的备注显示在页面顶部。用「有备注」或「待补充」筛选。
-3. 在「设置 → 模型设置」配置 DeepSeek 或兼容 Chat Completions 的模型。点击 AI 按钮生成候选，确认后保存。
-
-## 在资源管理器中使用
-
-- 右键文件、文件夹或目录内的空白处，从「显示更多选项」选择「Folio · 修改备注」。在空白处调用时，编辑的是当前文件夹的备注。快捷操作也可在 Folio 的「设置 → 资源管理器」切换。
-- 想在 Windows 资源管理器查看子文件夹的备注时，在 Folio 右上角检测「备注列」状态。开启后该目录会显示「详细信息」视图和「备注」列。
-- 文件夹备注保存在 Windows 可读的文件夹属性中。普通文件备注、模型配置和密钥保存在当前用户的本地应用数据目录。密钥由 Windows 加密。只有主动生成候选时，Folio 才向配置的模型服务发送所选项的资料摘要。
+```text
+├── host/                 # C# WinForms + WebView2 桌面宿主、存储与资源管理器集成
+├── explorer/             # Windows 11 右键命令与 MSIX 注册
+├── src/
+│   ├── components/
+│   │   ├── ui/           # 可复用基础交互组件（Button、SegmentedControl、SpringSwitch、ConfirmButton、CopyButton、ToastBar）
+│   │   └── ...           # 业务视图（侧栏、主工作区、列表/卡片、详情栏、设置、快捷编辑）
+│   ├── lib/utils.ts      # cn() 类名合并与弹簧动效曲线配置（兼容 shadcn / Watermelon / BoardUI 范式）
+│   ├── styles/app.css    # Tailwind CSS v4 + @theme 语义色彩与主题令牌
+│   ├── utils/            # 路径解析、偏好持久化与 Driver.js 引导
+│   ├── App.tsx           # 工作区主控状态
+│   └── main.tsx          # 前端入口（集成 MotionConfig reducedMotion）
+├── components.json       # 社区组件库（Watermelon UI / BoardUI / shadcn）注册表配置
+├── tsconfig.json         # @/* 路径别名配置
+├── installer/            # Inno Setup 安装脚本
+├── build.ps1             # 一键编译 Tailwind CSS v4、前端与 bin/Folio.exe
+└── package.ps1           # 生成安装包及 SHA-256 校验文件
+```
 
 ## 本地构建
 
-在 Windows x64 上安装 Node.js 24 和 Inno Setup 6，然后运行：
+在 Windows x64 上安装 Node.js 24（或 22+）、带有 C++ x64 工具及 Windows SDK 的 Visual Studio Build Tools，以及 Inno Setup 6。然后运行：
 
 ```powershell
-./build.ps1    # bin/Folio.exe
-./package.ps1  # dist/Folio-Setup-*-x64.exe 及 SHA-256 校验文件
+./build.ps1    # 构建 bin/Folio.exe
+./package.ps1  # 构建 dist/Folio-Setup-*-x64.exe 及 SHA-256 校验文件
 ```
 
-GitHub Actions 会为与项目版本匹配的标签打包并上传 Release。首个正式版标签是 `v1.0`，在安装程序中对应 Windows 版本号 `1.0.0`。
+默认生成供本地测试的未签名 MSIX。分发时可通过 `./package.ps1 -ExplorerSigningThumbprint <指纹>` 使用当前用户证书存储中的代码签名证书。
 
-视觉设计参考 [Unslop](https://heydamir.design/unslop)，由 Damir Sokolovsky 创作，采用 CC BY 4.0。上手引导使用 [Driver.js](https://driverjs.com/)。
+上手引导使用 [Driver.js](https://driverjs.com/)，图标使用 [Phosphor Icons](https://phosphoricons.com/)。
