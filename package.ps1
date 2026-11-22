@@ -18,8 +18,8 @@ if (!$InnoCompiler -or !(Test-Path -LiteralPath $InnoCompiler -PathType Leaf)) {
 }
 
 & (Join-Path $PSScriptRoot 'build.ps1')
-& $InnoCompiler "/DAppVersion=$version" (Join-Path $PSScriptRoot 'installer\ProjectNotes.iss')
+& $InnoCompiler "/DAppVersion=$version" (Join-Path $PSScriptRoot 'installer\Folio.iss')
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
-$file = Get-Item -LiteralPath (Join-Path $PSScriptRoot "dist\ProjectNotes-Setup-$version-x64.exe")
+$file = Get-Item -LiteralPath (Join-Path $PSScriptRoot "dist\Folio-Setup-$version-x64.exe")
 $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file.FullName).Hash.ToLowerInvariant()
 "$hash  $($file.Name)" | Set-Content -LiteralPath "$($file.FullName).sha256" -Encoding ascii

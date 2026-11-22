@@ -39,7 +39,7 @@ export function SettingsPanel({page,navigate,onClose,onSave}:{page:SettingsPage,
      <section className="explorer-settings" hidden={page!=='explorer'}>
        <h2>资源管理器</h2>
        <label className="setting-option">
-         <span>右键菜单<small>为文件和文件夹添加「修改备注」操作</small></span>
+         <span>右键菜单<small>右键文件、文件夹或目录空白处，选择「显示更多选项」→「Folio · 修改备注」</small></span>
          <input type="checkbox" role="switch" aria-label="右键菜单显示修改备注" disabled={enabled===null} checked={enabled===true} onChange={changeMenu}/>
        </label>
        {error&&<div role="alert" className="error">{error}</div>}

@@ -61,23 +61,32 @@ internal sealed class Preferences
 }
 internal static class ShellMenu
 {
-    static readonly string[] Paths={@"Software\Classes\*\shell\ProjectNotesLite.Edit",@"Software\Classes\Directory\shell\ProjectNotesLite.Edit"};
-    static string Command(string executable){return "\""+executable+"\" --edit \"%1\"";}
-    static bool Owns(string path,string executable){
+    const string Label="Folio · 修改备注";
+    static readonly Dictionary<string,string> Paths=new Dictionary<string,string>{
+        {@"Software\Classes\*\shell\ProjectNotesLite.Edit","%1"},
+        {@"Software\Classes\Directory\shell\ProjectNotesLite.Edit",@"%1\."},
+        {@"Software\Classes\Directory\Background\shell\ProjectNotesLite.Edit",@"%V\."},
+    };
+    static string Command(string executable,string target){return "\""+executable+"\" --edit \""+target+"\"";}
+    static bool Owns(string path,string target,string executable,bool includeLegacy=false){
         using(var key=Registry.CurrentUser.OpenSubKey(path+@"\command"))
-            return key!=null&&string.Equals(key.GetValue("") as string,Command(executable),StringComparison.OrdinalIgnoreCase);
+        {
+            var command=key==null?null:key.GetValue("") as string;
+            return string.Equals(command,Command(executable,target),StringComparison.OrdinalIgnoreCase)||
+                (includeLegacy&&string.Equals(command,Command(executable,"%1"),StringComparison.OrdinalIgnoreCase));
+        }
     }
     internal static void Set(bool enabled,string executable){
-        foreach(var path in Paths){
-            if(enabled){using(var k=Registry.CurrentUser.CreateSubKey(path)){
-                k.SetValue("","修改备注");k.SetValue("MUIVerb","修改备注");k.SetValue("Icon","\""+executable+"\",0");k.SetValue("MultiSelectModel","Single");
-                using(var cmd=k.CreateSubKey("command"))cmd.SetValue("",Command(executable));
-            }}else if(Owns(path,executable))Registry.CurrentUser.DeleteSubKeyTree(path,false);
+        foreach(var entry in Paths){
+            if(enabled){using(var k=Registry.CurrentUser.CreateSubKey(entry.Key)){
+                k.SetValue("",Label);k.SetValue("MUIVerb",Label);k.SetValue("Icon","\""+executable+"\",0");k.SetValue("MultiSelectModel","Single");
+                using(var cmd=k.CreateSubKey("command"))cmd.SetValue("",Command(executable,entry.Value));
+            }}else if(Owns(entry.Key,entry.Value,executable,true))Registry.CurrentUser.DeleteSubKeyTree(entry.Key,false);
         }
         SHChangeNotify(0x08000000,0,IntPtr.Zero,IntPtr.Zero);
     }
     internal static bool Enabled(string exe){
-        return Paths.All(path=>Owns(path,exe));
+        return Paths.All(entry=>Owns(entry.Key,entry.Value,exe));
     }
     [DllImport("shell32.dll")]static extern void SHChangeNotify(int e,uint f,IntPtr a,IntPtr b);
 }

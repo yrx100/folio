@@ -26,7 +26,7 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -cne "v$version") {
+          if ($env:GITHUB_REF_NAME -cne "v$version" -and "$($env:GITHUB_REF_NAME).0" -cne "v$version") {
             throw "Tag $env:GITHUB_REF_NAME must match package.json version v$version"
           }
           $setup = Join-Path $env:RUNNER_TEMP 'innosetup-6.7.3.exe'
@@ -37,6 +37,18 @@ jobs:
           $installer = Start-Process $setup -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/CURRENTUSER',('/DIR="' + $compilerDir + '"') -WindowStyle Hidden -Wait -PassThru
           if ($installer.ExitCode -ne 0) { throw "Inno Setup installation failed: $($installer.ExitCode)" }
           ./package.ps1 -InnoCompiler (Join-Path $compilerDir 'ISCC.exe')
+      - name: Verify installation and Explorer shortcuts
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $target = Join-Path $env:RUNNER_TEMP 'FolioSmoke'
+          $setup = Start-Process "dist/Folio-Setup-$version-x64.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=explorer',('/DIR="' + $target + '"') -WindowStyle Hidden -Wait -PassThru
+          if ($setup.ExitCode -ne 0 -or !(Test-Path "$target\Folio.exe")) { throw 'Folio installation failed' }
+          $background = 'HKCU:\Software\Classes\Directory\Background\shell\ProjectNotesLite.Edit\command'
+          $expected = '"' + $target + '\Folio.exe" --edit "%V\."'
+          if ((Get-Item -LiteralPath $background).GetValue('') -ne $expected) { throw 'Missing Explorer background shortcut' }
+          $uninstall = Start-Process "$target\unins000.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -WindowStyle Hidden -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0 -or (Test-Path -LiteralPath $background)) { throw 'Folio uninstallation failed' }
       - name: Publish release
         shell: pwsh
         env:
@@ -44,6 +56,6 @@ jobs:
         run: |
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $tag = $env:GITHUB_REF_NAME
-          $installer = "dist/ProjectNotes-Setup-$version-x64.exe"
-          gh release create $tag $installer "$installer.sha256" --verify-tag --title "项目备注 $version" --generate-notes
+          $installer = "dist/Folio-Setup-$version-x64.exe"
+          gh release create $tag $installer "$installer.sha256" --verify-tag --title "Folio $($tag.TrimStart('v'))" --latest --generate-notes
           if ($LASTEXITCODE -ne 0) { throw "GitHub Release publishing failed" }

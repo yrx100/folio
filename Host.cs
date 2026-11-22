@@ -25,7 +25,7 @@ internal static class Start
         bool first;
         using (new Mutex(true, quick?null:@"Local\ProjectNotesLite-f30f99", out first))
         {
-            if (!first && !quick) { MessageBox.Show("请先保存备注并关闭已打开的项目备注窗口，再打开新版。", "项目备注"); return; }
+            if (!first && !quick) { MessageBox.Show("请先保存备注并关闭已打开的 Folio 窗口。", "Folio"); return; }
             var data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"ProjectNotesLite");
             var runtime = Path.Combine(data,"runtime",typeof(Start).Assembly.ManifestModule.ModuleVersionId.ToString("N"));
             try
@@ -44,14 +44,14 @@ internal static class Start
                 AppDomain.CurrentDomain.AssemblyResolve += (s,e) => new AssemblyName(e.Name).Name=="Microsoft.Web.WebView2.Core" ? Assembly.LoadFrom(Path.Combine(runtime,"Microsoft.Web.WebView2.Core.dll")) : null;
                 Run(data,runtime,args);
             }
-            catch(Exception e) { MessageBox.Show(e.Message,"无法打开项目备注"); }
+            catch(Exception e) { MessageBox.Show(e.Message,"无法打开 Folio"); }
         }
     }
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
     static void Run(string data,string runtime,string[] args) {
         CoreWebView2Environment.SetLoaderDllFolderPath(runtime);
         bool quick=args.Length==2&&args[0]=="--edit";
-        Application.Run(new Host(data,quick?args[1]:args.Length>0?args[0]:@"D:\AIProject",quick));
+        Application.Run(new Host(data,quick?args[1]:args.Length>0?args[0]:"",quick));
     }
 }
 
@@ -112,7 +112,7 @@ internal sealed class Host : Form
         data=dir; notes=new NoteStore(dir); root=Directory.Exists(initial)?Path.GetFullPath(initial):"";
         preferences=new Preferences(dir); this.quick=quick;
         if(quick){quickPath=Path.GetFullPath(initial);if(!File.Exists(quickPath)&&!Directory.Exists(quickPath))throw new IOException("目标已移动或删除。");root=quickPath;}
-        Text=quick?"修改备注":"项目备注"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        Text=quick?"修改备注":"Folio"; Icon=Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         FormBorderStyle=FormBorderStyle.None;
         StartPosition=FormStartPosition.CenterScreen; MinimumSize=new Size(790,530);
         ClientSize=new Size(Math.Min(1180,Screen.PrimaryScreen.WorkingArea.Width-50),Math.Min(775,Screen.PrimaryScreen.WorkingArea.Height-75));
