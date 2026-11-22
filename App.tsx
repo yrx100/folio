@@ -128,7 +128,7 @@ function App({boot}:{boot:Boot}){
  }
  const directoryNote=notes[path];
  const disabled=!directory||working;
- return <div className={'shell '+(!side?'no-side':'')}>
+ return <div className={'shell'+(!side?' no-side':'')+(!path?' empty-workspace':'')}>
  <TitleBar>
    <IconBtn label={side?'收起侧栏':'展开侧栏'} onClick={()=>S(!side)}><SidebarSimple size={19}/></IconBtn>
    <div className="bar-separator"/>
@@ -147,7 +147,7 @@ function App({boot}:{boot:Boot}){
  {!path?<Welcome onOpen={pick} onTour={walkthrough}/>:<>
  <section className="intro"><div className="hero"><FolderOpen size={24} aria-hidden="true"/><div><h1 title={path}>{path?leaf(path):'项目目录'}</h1><div className="meta">{path?(loading?'正在读取目录…':folders+' 个文件夹 · '+(items.length-folders)+' 个文件'):'选择本地工作目录'}</div></div></div><div className="headeractions">
  {path&&<CommentColumnControl key={path} path={path} onError={failure}/>}
- <button className="quiet" disabled={disabled} title="编辑当前文件夹的备注" onClick={()=>edit(directory,'edit')}><NotePencil/>编辑备注</button><button className="primary" disabled={disabled} title="为当前文件夹生成备注" onClick={()=>edit(directory,'ai')}><MagicWand/>AI 生成备注</button></div></section>
+ <button className="primary" disabled={disabled} title="编辑当前文件夹的备注" onClick={()=>edit(directory,'edit')}><NotePencil/>编辑备注</button><button className="quiet" disabled={disabled} title="为当前文件夹生成备注" onClick={()=>edit(directory,'ai')}><MagicWand/>AI 生成备注</button></div></section>
  {path&&<div className="directory-note" aria-live="polite">
    <span>当前文件夹备注</span>
    {directoryNote?<p>{directoryNote}</p>:<p className="muted">{directoryNote===''?'暂无备注':directoryNote===null?'备注暂时无法读取':loading?'正在读取…':'正在读取备注…'}</p>}

@@ -117,7 +117,7 @@ internal sealed class Host : Form
         StartPosition=FormStartPosition.CenterScreen; MinimumSize=new Size(790,530);
         ClientSize=new Size(Math.Min(1180,Screen.PrimaryScreen.WorkingArea.Width-50),Math.Min(775,Screen.PrimaryScreen.WorkingArea.Height-75));
         if(quick){MinimumSize=new Size(438,360);ClientSize=new Size(490,365);MaximizeBox=false;}
-        BackColor=Color.FromArgb(250,250,248);
+        BackColor=Color.White;
         Shown+=async delegate { await Init(); };
         Resize+=delegate {
             LayoutWebView();
