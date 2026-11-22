@@ -1,0 +1,10 @@
+/bin/
+/dist/
+/node_modules/
+/sdk/
+/wv.zip
+/prior-*.exe
+*.user
+*.log
+.env
+.env.*
