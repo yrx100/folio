@@ -401,12 +401,10 @@ internal sealed class Host : Form
                 picking = true;
                 try
                 {
-                    using (var dlg = new FolderBrowserDialog { Description = "选择工作目录", SelectedPath = root, ShowNewFolderButton = false })
-                    {
-                        if (dlg.ShowDialog(this) != DialogResult.OK) return null;
-                        root = Path.GetFullPath(dlg.SelectedPath);
-                        return root;
-                    }
+                    string selected = FolderPicker.Pick(Handle);
+                    if (selected == null) return null;
+                    root = Path.GetFullPath(selected);
+                    return root;
                 }
                 finally { picking = false; }
             case "openRoot":
